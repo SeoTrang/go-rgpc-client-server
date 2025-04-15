@@ -7,11 +7,27 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"seotrang.com/rgpc-clint-server/greeterpb"
 )
 
 type server struct {
 	greeterpb.UnimplementedGreeterServer
+}
+
+type User struct {
+	id   int32
+	name string
+	age  int32
+}
+
+var Users = []User{
+	{id: 1, name: "Alice", age: 25},
+	{id: 2, name: "Bob", age: 30},
+	{id: 3, name: "Charlie", age: 22},
+	{id: 4, name: "David", age: 35},
+	{id: 5, name: "Eve", age: 28},
 }
 
 func (s *server) SayHello(ctx context.Context, req *greeterpb.HelloRequest) (*greeterpb.HelloResponse, error) {
@@ -20,6 +36,22 @@ func (s *server) SayHello(ctx context.Context, req *greeterpb.HelloRequest) (*gr
 		Message: "Hello " + name,
 	}
 	return res, nil
+}
+
+func (s *server) GetUser(ctx context.Context, req *greeterpb.GetUserRequest) (*greeterpb.GetUserResponse, error) {
+	var id int32 = req.GetId()
+	for _, user := range Users {
+		if user.id == id {
+			return &greeterpb.GetUserResponse{
+				Id:   user.id,
+				Name: user.name,
+				Age:  user.age,
+			}, nil
+		}
+	}
+
+	return nil, status.Errorf(codes.NotFound, "User with ID %d not found", id)
+
 }
 
 func main() {
